@@ -1,0 +1,6 @@
+*
+!.gitignore
+!*.cpp
+!*.d32
+!*.mac
+list-kv.txt

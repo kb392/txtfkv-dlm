@@ -1,0 +1,24 @@
+import "txtfkv.d32";
+
+var obj=TTxtKV("E:\\Users\\Tema\\C\\RS-Bank\\txtkv\\RSMP\\txt\\od3.txt","\t");
+
+printLN("Байт: "  + obj.FileSize);
+printLN("Разделитель [" + obj.Separator+"]");
+printLN("Диапазон [" + obj.FirstKey+"]-[" + obj.LastKey+"]");
+
+macro Check(key)
+    [--------------------];
+    var r=obj.Find(key);
+    if (ValType(r)==V_STRING)
+        printLN(key, ": ",r );
+    elif (ValType(r)==V_BOOL)
+        printLN(key, ": (bool)",String(r));
+    else
+        printLN(key, ": неизвестный ответ ",r );
+    end;
+OnError(e)
+    printLN(key, ": ", e.message);
+end;
+
+Check("9901088889");
+

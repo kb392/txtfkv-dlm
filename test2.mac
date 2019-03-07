@@ -1,0 +1,34 @@
+import "txtkv.d32";
+
+var obj=TTxtKV("list-kv.txt",",");
+
+printLN("Длина ключа: " + obj.KeyLength);
+printLN("Общая длина: " + obj.StringLength);
+printLN("Полей: " + obj.CountFields);
+printLN("Строк: " + obj.CountLines);
+printLN("Разделитель [" + obj.Separator+"]");
+
+macro Check(key)
+    [--------------------];
+    var r=obj.Find(key);
+    if (ValType(r)==V_STRING)
+        printLN(key, ": ",r );
+    elif (ValType(r)==V_BOOL)
+        printLN(key, ": (bool)",String(r));
+    else
+        printLN(key, ": неизвестный ответ ",r );
+    end;
+OnError(e)
+    printLN(key, ": ", e.message);
+end;
+
+Check("   ");
+Check("000");
+Check("001");
+Check("002");
+Check("003");
+Check("004");
+Check("005");
+Check("006");
+Check("007");
+Check("999");

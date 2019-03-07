@@ -1,0 +1,35 @@
+import "txtfkv.d32";
+
+var obj=TTxtKV("list-fkv.txt",",");
+
+printLN("Байт: "  + obj.FileSize);
+printLN("Разделитель [" + obj.Separator+"]");
+printLN("Диапазон [" + obj.FirstKey+"]-[" + obj.LastKey+"]");
+
+macro Check(key)
+    [--------------------];
+    var r=obj.Find(key);
+    if (ValType(r)==V_STRING)
+        printLN(key, ": ",r );
+    elif (ValType(r)==V_BOOL)
+        printLN(key, ": (bool)",String(r));
+    else
+        printLN(key, ": неизвестный ответ ",r );
+    end;
+OnError(e)
+    printLN(key, ": ", e.message);
+end;
+
+Check("   ");
+Check("888");
+Check("777");
+Check("000");
+Check("010");
+Check("001");
+Check("002");
+Check("003");
+Check("004");
+Check("005");
+Check("006");
+Check("007");
+Check("999");

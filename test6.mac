@@ -1,0 +1,45 @@
+import "txtfkv.d32";
+
+var cntFound=0;
+var cntNotFound=0;
+var cntErr=0;
+
+setdelim("\t");
+
+file f("E:\\Users\\Tema\\C\\RS-Bank\\txtkv\\RSMP\\rmsp-fl02102019.txt") txt;
+
+var obj=TTxtKV("E:\\Users\\Tema\\C\\RS-Bank\\txtkv\\RSMP\\rmsp-fl02102019.txt","\t");
+
+printLN("Байт: "  + obj.FileSize);
+printLN("Разделитель [" + obj.Separator+"]");
+printLN("Диапазон [" + obj.FirstKey+"]-[" + obj.LastKey+"]");
+
+macro Check(key)
+    [--------------------];
+    var r=obj.Find(key);
+    if (ValType(r)==V_STRING)
+        printLN(key, ": ",r );
+        cntFound=cntFound+1;
+    elif (ValType(r)==V_BOOL)
+        printLN(key, ": (bool)",String(r));
+        if (r)
+            cntFound=cntFound+1;
+        else
+            cntNotFound=cntNotFound+1;
+        end;
+    else
+        printLN(key, ": неизвестный ответ ",r );
+    end;
+OnError(e)
+    printLN(key, ": ", e.message);
+    cntErr=cntErr+1;
+end;
+
+
+while (next(f))
+    Check(f(0));
+end;
+
+[Найдено   ###############](cntFound:a);
+[НеНайдено ###############](cntNotFound:a);
+[Error     ###############](cntErr:a);

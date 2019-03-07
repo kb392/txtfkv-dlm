@@ -1,0 +1,11 @@
+import "txtkv.d32";
+
+var obj=TTxtKV("list-kv.txt",",");
+
+printLN("Длина ключа: " + obj.KeyLength);
+printLN("Общая длина: " + obj.StringLength);
+printLN("Полей: " + obj.CountFields);
+printLN("Строк: " + obj.CountLines);
+printLN("Разделитель [" + obj.Separator+"]");
+
+printLN(obj.Find("000"));
