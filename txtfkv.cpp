@@ -72,7 +72,7 @@ int strcrlf(const char * buff, int buff_len, int * piStrSepLen) {
     return -1;
     }
 
-class  TTxtKV {
+class  TTxtFKV {
     
     int openFile(void) {
         if (fh>0)
@@ -189,7 +189,7 @@ class  TTxtKV {
         int i;
         if (pos_found>=0) {
             i=(int)(pos_found-pos);
-            if(page_buffer[i]=='\t') {
+            if(page_buffer[i]==separator) {
                 for(int start=++i;i<page_size && i<tmp_real_read_size;i++) {
                     // если попался конец строки, то ставим вместо него сишный конец строки
                     // и возвращаем
@@ -213,7 +213,12 @@ class  TTxtKV {
                         return;
                         }
                     }
-                RslError("error R3 %I64d %I64d %I64d", pos, pos_found, file_size);
+                if (pos_found+1+i==file_size) {
+                    page_buffer[i]='\0';
+                    ValueSet (pv,V_STRING, page_buffer);
+                    return;
+                    }
+                RslError("error R3 i %i, pos %I64d, found %I64d, size %I64d, real page %i", i, pos, pos_found, file_size, tmp_real_read_size);
 
 
                 }
@@ -228,7 +233,7 @@ class  TTxtKV {
                 }
             else {
                 page_buffer[(int)(pos_found-pos)+i]='\0';
-                RslError("error R2 %i [%c] %I64d %I64d %I64d [%s]", i, page_buffer[i], pos, pos_found, file_size, page_buffer+(int)(pos_found-pos));
+                RslError("error R2 %i [%c] pos %I64d, pos found, file_ ize %I64d, %I64d [%s]", i, page_buffer[i], pos, pos_found, file_size, page_buffer+(int)(pos_found-pos));
                 }
 
 
@@ -246,9 +251,17 @@ class  TTxtKV {
 
         _lseeki64(fh, pos, SEEK_SET);
         tmp_real_read_size=_read(fh,page_buffer,page_size);
+
+#ifdef TXTFKV_DEBUG_PRINT
+        print("begin scan page pos %I64d, start %i, real read size %i\n", pos, start_pos, tmp_real_read_size);
+#endif
+
+
         int i;
         for(i=0;i<tmp_real_read_size;i++) {
-            //print("i=%i, flag_pass_crlf=%i, start_pos=%i\n",i,flag_pass_crlf,start_pos);
+#ifdef TXTFKV_DEBUG_PRINT
+            print("i=%i, flag_pass_crlf=%i, start_pos=%i\n",i,flag_pass_crlf,start_pos);
+#endif
 
             if (page_buffer[i]=='\r' || page_buffer[i]=='\n') { // конец строки
                 flag_pass_crlf=true;
@@ -262,7 +275,7 @@ class  TTxtKV {
                     tmp[i-start_pos]='\0';
 
 #ifdef TXTFKV_DEBUG_PRINT
-                    print("%i=[%c] index %i (%i), NL, %s<>%s=%i\n",i,page_buffer[i],page_key_idx,start_pos,key,tmp,r);
+                    print("%i=[%c] index %i (%i), NL, %s<>%s=%i\n", i, page_buffer[i], page_key_idx, start_pos, key, tmp, r);
 #endif
                     if (r<=0) { // ответ выше или нашли
                         if(page_key_idx>0 && r<0)
@@ -285,7 +298,7 @@ class  TTxtKV {
                     r=strncmp(key,page_buffer+start_pos,i-start_pos);
 
 #ifdef TXTFKV_DEBUG_PRINT
-                    print("%i=[%c] index %i (%i), separator, %s<>%s=%i\n",i,page_buffer[i],page_key_idx,start_pos,key,tmp,r);
+                    print("%i=[%c] index %i (%i), separator, %s<>%s=%i\n", i, page_buffer[i], page_key_idx, start_pos, key, tmp, r);
 #endif
                     if (r<=0) { 
                         if(page_key_idx>0 && r<0)
@@ -344,7 +357,9 @@ class  TTxtKV {
         if (file_size<=page_size) {
             r=scanPage(key, 0, &result_pos, &page_real_pos, &pos_next); 
             if (r==0 && result_pos>=0) {
-                //print("нашли в %I64d\n",result_pos);
+#ifdef TXTFKV_DEBUG_PRINT
+                print("one-page found %I64d %I64d %I64d\n",result_pos, page_real_pos, pos_next);
+#endif
                 setResult2 (retVal, 0, result_pos);
                 return true;
                 }
@@ -448,21 +463,16 @@ class  TTxtKV {
 
 public:
 
-    TTxtKV (TGenObject *pThis = NULL) {
+    TTxtFKV (TGenObject *pThis = NULL) {
         
       ValueMake (&m_fileName);
       ValueSet (&m_fileName,V_STRING,"");
 
-      //ValueMake (&m_tailShift);
-      //m_tailShift.v_type.
-
       m_maxKeyLength.v_type=V_INTEGER;
       m_maxKeyLength.value.intval=256;
-
-      
       }
 
-    ~TTxtKV () {
+    ~TTxtFKV () {
         if (fh>-1)
             _close(fh); // уходя закройте файл
         if (*m_fileName.value.string)
@@ -478,9 +488,9 @@ public:
         
         }
 
-    RSL_CLASS(TTxtKV)
+    RSL_CLASS(TTxtFKV)
 
-    RSL_INIT_DECL() {         // void TTxtKV::Init (int *firstParmOffs)
+    RSL_INIT_DECL() {         // void TTxtFKV::Init (int *firstParmOffs)
         
         m_fileName.value.string=rsGetFilePathParam(*firstParmOffs);
         char * separator_param=rsGetStringParam(*firstParmOffs+1, "\t");
@@ -564,16 +574,6 @@ public:
         const char * key =rsGetStringParam(1, NULL);
 
         if (findKey(key,retVal)) {
-                /*
-            if (count_fields)
-                //ValueSet (retVal,V_STRING,resultStr);
-                //ValueSet (retVal,V_STRING,"TEST");
-                ;
-            else {
-                ret_bool=TRUE;
-                ValueSet (retVal,V_BOOL,&ret_bool);
-                }
-                */
             return 0;
             }
         else {
@@ -617,7 +617,7 @@ private:
 
 TRslParmsInfo prmOneStr[] = { {V_STRING,0} };
 
-RSL_CLASS_BEGIN(TTxtKV)
+RSL_CLASS_BEGIN(TTxtFKV)
     RSL_INIT
     RSL_PROP_EX    (fileName,m_fileName,-1,V_STRING, VAL_FLAG_RDONLY)
     RSL_METH_EX    (Find,-1,V_UNDEF,0,RSLNP(prmOneStr),prmOneStr)
@@ -635,7 +635,7 @@ RSL_CLASS_END
 
 EXP32 void DLMAPI EXP AddModuleObjects (void) {
     //setlocale(LC_ALL,".866");
-    RslAddUniClass (TTxtKV::TablePtr,true);
+    RslAddUniClass (TTxtFKV::TablePtr,true);
     }
 
 

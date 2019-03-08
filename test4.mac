@@ -1,6 +1,6 @@
 import "txtfkv.d32";
 
-var obj=TTxtKV("list-fkv.txt",",");
+var obj=TTxtFKV("list-fkv.txt",",");
 
 printLN("Байт: "  + obj.FileSize);
 printLN("Разделитель [" + obj.Separator+"]");

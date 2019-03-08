@@ -1,8 +1,0 @@
-import "txtfkv.d32";
-
-var obj=TTxtKV("all_passport_hashes_sorted.txt","\t");
-
-printLN("Байт: "  + obj.FileSize);
-printLN("Разделитель [" + obj.Separator+"]");
-printLN("Диапазон [" + obj.FirstKey+"]-[" + obj.LastKey+"]");
-
